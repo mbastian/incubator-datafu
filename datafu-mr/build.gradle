@@ -1,0 +1,86 @@
+apply plugin: 'java'
+apply plugin: 'license'
+
+import groovy.xml.MarkupBuilder
+
+buildscript {
+  repositories {
+      mavenCentral()
+  }
+  dependencies {
+  }
+}
+
+cleanEclipse {
+  doLast {
+    delete ".apt_generated"
+    delete ".settings"
+    delete ".factorypath"
+    delete "bin"
+  }
+}
+
+// modify the pom dependencies so we don't include hadoop and the testing related artifacts
+modifyPom {
+  project {
+    dependencies {
+      dependency {
+        groupId 'log4j'
+        artifactId 'log4j'
+        version "$log4jVersion"
+      }
+      dependency {
+        groupId 'org.json'
+        artifactId 'json'
+        version "$jsonVersion"
+      }
+      dependency {
+        groupId 'org.apache.avro'
+        artifactId 'avro'
+        version "$avroVersion"
+      }
+      dependency {
+        groupId 'org.apache.avro'
+        artifactId 'avro-mapred'
+        version "$avroVersion"
+      }
+      dependency {
+        groupId 'org.apache.avro'
+        artifactId 'avro-compiler'
+        version "$avroVersion"
+      }
+    }
+  }
+}
+
+// create tasks to automatically add the license header
+license {
+  header rootProject.file('HEADER')
+  skipExistingHeaders = true
+}
+
+dependencies {
+  // core dependencies, listed as dependencies in pom
+  compile "log4j:log4j:$log4jVersion"
+  compile "org.json:json:$jsonVersion"
+  compile "org.apache.avro:avro:$avroVersion"
+  compile "org.apache.avro:avro-mapred:$avroVersion"
+  compile "org.apache.avro:avro-compiler:$avroVersion"
+
+  // needed for compilation and testing, not listed as a dependencies in pom
+  compile "org.apache.hadoop:hadoop-core:$hadoopVersion"
+  compile "org.apache.hadoop:hadoop-tools:$hadoopVersion"
+
+  // needed for testing, not listed as a dependencies in pom
+  testCompile "org.apache.hadoop:hadoop-test:$hadoopVersion"
+  testCompile "javax.ws.rs:jsr311-api:$jsr311Version"
+  testCompile "org.testng:testng:$testngVersion"
+  testCompile "commons-io:commons-io:$commonsIoVersion"
+}
+
+test {
+  // enable TestNG support (default is JUnit)
+  useTestNG()
+
+  maxHeapSize = "2G"
+}
